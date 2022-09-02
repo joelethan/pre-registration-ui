@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import * as html2pdf from "html2pdf.js";
+// import * as html2pdf from "html2pdf.js";
 import { MatDialog } from "@angular/material";
 import { BookingService } from "../../booking/booking.service";
 import { DialougComponent } from "src/app/shared/dialoug/dialoug.component";
@@ -100,7 +100,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     await this.apiCalls();
     if (this.bookingService.getSendNotification()) {
       this.bookingService.resetSendNotification();
-      await this.automaticNotification();
+      // await this.automaticNotification();
     }
     this.prepareAckDataForUI();
     this.showSpinner = false;
@@ -437,11 +437,11 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     });  
   }
 
-  automaticNotification() {
-    setTimeout(() => {
-      this.sendNotification(this.applicantContactDetails, false);
-    }, 500);
-  }
+  // automaticNotification() {
+  //   setTimeout(() => {
+  //     this.sendNotification(this.applicantContactDetails, false);
+  //   }, 500);
+  // }
 
   getTemplate() {
     return new Promise((resolve) => {
@@ -456,67 +456,67 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     });
   }
 
-  download() {
-    window.scroll(0, 0);
-    const element = document.getElementById("print-section");
+  // download() {
+  //   window.scroll(0, 0);
+  //   const element = document.getElementById("print-section");
     
-    html2pdf(element, this.pdfOptions);
-  }
+  //   html2pdf(element, this.pdfOptions);
+  // }
 
-  async generateBlob() {
-    const element = document.getElementById("print-section");
-    return await html2pdf()
-      .set(this.pdfOptions)
-      .from(element)
-      .outputPdf("dataurlstring");
-  }
+  // async generateBlob() {
+  //   const element = document.getElementById("print-section");
+  //   return await html2pdf()
+  //     .set(this.pdfOptions)
+  //     .from(element)
+  //     .outputPdf("dataurlstring");
+  // }
 
-  async createBlob() {
-    const dataUrl = await this.generateBlob();
-    // convert base64 to raw binary data held in a string
-    const byteString = atob(dataUrl.split(",")[1]);
+  // async createBlob() {
+  //   const dataUrl = await this.generateBlob();
+  //   // convert base64 to raw binary data held in a string
+  //   const byteString = atob(dataUrl.split(",")[1]);
 
-    // separate out the mime component
-    const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
+  //   // separate out the mime component
+  //   const mimeString = dataUrl.split(",")[0].split(":")[1].split(";")[0];
 
-    // write the bytes of the string to an ArrayBuffer
-    const arrayBuffer = new ArrayBuffer(byteString.length);
+  //   // write the bytes of the string to an ArrayBuffer
+  //   const arrayBuffer = new ArrayBuffer(byteString.length);
 
-    var _ia = new Uint8Array(arrayBuffer);
-    for (let i = 0; i < byteString.length; i++) {
-      _ia[i] = byteString.charCodeAt(i);
-    }
+  //   var _ia = new Uint8Array(arrayBuffer);
+  //   for (let i = 0; i < byteString.length; i++) {
+  //     _ia[i] = byteString.charCodeAt(i);
+  //   }
 
-    const dataView = new DataView(arrayBuffer);
-    return await new Blob([dataView], { type: mimeString });
-  }
+  //   const dataView = new DataView(arrayBuffer);
+  //   return await new Blob([dataView], { type: mimeString });
+  // }
 
-  sendAcknowledgement() {
-    const data = {
-      case: "SEND_ACKNOWLEDGEMENT",
-      notificationTypes: this.notificationTypes,
-    };
-    const subs = this.dialog
-      .open(DialougComponent, {
-        width: "350px",
-        data: data
-      })
-      .afterClosed()
-      .subscribe((applicantNumber) => {
-        //console.log(applicantNumber);
-        if (applicantNumber !== undefined) {
-          this.preRegIds.forEach(preRegId => {
-            this.applicantContactDetails.push({
-              "preRegId": preRegId,
-              "phone": applicantNumber[1],
-              "email": applicantNumber[0]
-            });
-          });
-          this.sendNotification(this.applicantContactDetails, true);
-        }
-      });
-    this.subscriptions.push(subs);
-  }
+  // sendAcknowledgement() {
+  //   const data = {
+  //     case: "SEND_ACKNOWLEDGEMENT",
+  //     notificationTypes: this.notificationTypes,
+  //   };
+  //   const subs = this.dialog
+  //     .open(DialougComponent, {
+  //       width: "350px",
+  //       data: data
+  //     })
+  //     .afterClosed()
+  //     .subscribe((applicantNumber) => {
+  //       //console.log(applicantNumber);
+  //       if (applicantNumber !== undefined) {
+  //         this.preRegIds.forEach(preRegId => {
+  //           this.applicantContactDetails.push({
+  //             "preRegId": preRegId,
+  //             "phone": applicantNumber[1],
+  //             "email": applicantNumber[0]
+  //           });
+  //         });
+  //         this.sendNotification(this.applicantContactDetails, true);
+  //       }
+  //     });
+  //   this.subscriptions.push(subs);
+  // }
 
   async generateQRCode(name) {
     try {
@@ -537,55 +537,55 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     }
   }
 
-  async sendNotification(contactInfoArr, additionalRecipient: boolean) {
-    this.fileBlob = await this.createBlob();
-    this.preRegIds.forEach(async preRegId => {
-      let notificationObject = {};
-      this.usersInfoArr.forEach(async (user) => {
-        if (preRegId == user.preRegId) {
-          let contactInfo = {};
-          contactInfoArr.forEach(item => {
-            if (item["preRegId"] == preRegId) {
-              contactInfo = item;
-            }
-          });
-          notificationObject[user.langCode] = new NotificationDtoModel(
-            user.fullName,
-            user.preRegId,
-            user.bookingData
-              ? user.bookingData.split(",")[0]
-              : user.regDto.appointment_date,
-            Number(user.bookingTimePrimary.split(":")[0]) < 10
-              ? "0" + user.bookingTimePrimary
-              : user.bookingTimePrimary,
-              contactInfo["phone"] === undefined ? null : contactInfo["phone"],
-              contactInfo["email"] === undefined ? null : contactInfo["email"],
-            additionalRecipient,
-            false
-          );
-        }
-      });
-      const model = new RequestModel(
-        appConstants.IDS.notification,
-        notificationObject
-      );
-      let notificationRequest = new FormData();
-      notificationRequest.append(
-        appConstants.notificationDtoKeys.notificationDto,
-        JSON.stringify(model).trim()
-      );
-      notificationRequest.append(
-        appConstants.notificationDtoKeys.langCode,
-        Object.keys(notificationObject).join(",")
-      );
-      notificationRequest.append(
-        appConstants.notificationDtoKeys.file,
-        this.fileBlob,
-        `${preRegId}.pdf`
-      );
-      await this.sendNotificationForPreRegId(notificationRequest);
-    }); 
-  }
+  // async sendNotification(contactInfoArr, additionalRecipient: boolean) {
+  //   this.fileBlob = await this.createBlob();
+  //   this.preRegIds.forEach(async preRegId => {
+  //     let notificationObject = {};
+  //     this.usersInfoArr.forEach(async (user) => {
+  //       if (preRegId == user.preRegId) {
+  //         let contactInfo = {};
+  //         contactInfoArr.forEach(item => {
+  //           if (item["preRegId"] == preRegId) {
+  //             contactInfo = item;
+  //           }
+  //         });
+  //         notificationObject[user.langCode] = new NotificationDtoModel(
+  //           user.fullName,
+  //           user.preRegId,
+  //           user.bookingData
+  //             ? user.bookingData.split(",")[0]
+  //             : user.regDto.appointment_date,
+  //           Number(user.bookingTimePrimary.split(":")[0]) < 10
+  //             ? "0" + user.bookingTimePrimary
+  //             : user.bookingTimePrimary,
+  //             contactInfo["phone"] === undefined ? null : contactInfo["phone"],
+  //             contactInfo["email"] === undefined ? null : contactInfo["email"],
+  //           additionalRecipient,
+  //           false
+  //         );
+  //       }
+  //     });
+  //     const model = new RequestModel(
+  //       appConstants.IDS.notification,
+  //       notificationObject
+  //     );
+  //     let notificationRequest = new FormData();
+  //     notificationRequest.append(
+  //       appConstants.notificationDtoKeys.notificationDto,
+  //       JSON.stringify(model).trim()
+  //     );
+  //     notificationRequest.append(
+  //       appConstants.notificationDtoKeys.langCode,
+  //       Object.keys(notificationObject).join(",")
+  //     );
+  //     notificationRequest.append(
+  //       appConstants.notificationDtoKeys.file,
+  //       this.fileBlob,
+  //       `${preRegId}.pdf`
+  //     );
+  //     await this.sendNotificationForPreRegId(notificationRequest);
+  //   }); 
+  // }
 
   private sendNotificationForPreRegId(notificationRequest) {
     return new Promise((resolve, reject) => {
